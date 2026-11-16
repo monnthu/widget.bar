@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101114">
+  <title>Agente Hub</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="dock" id="dock">
+    <button class="rail" id="rail" aria-label="Abrir Agente Hub" title="Agente Hub">
+      <span class="brand-mark"><i></i><i></i><i></i></span>
+      <span class="rail-count" id="rail-count">0</span>
+    </button>
+    <section class="panel" aria-label="Panel de agentes">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span><div><b>agente hub</b><small id="live-label">en tu equipo</small></div></div>
+        <div class="head-actions"><button class="icon-button" id="settings-open" aria-label="Ajustes" title="Ajustes">⚙</button><button class="icon-button close" id="collapse" aria-label="Contraer">×</button></div>
+      </header>
+      <div class="now-card">
+        <div class="section-label"><span class="pulse"></span> ACTIVIDAD <span class="line"></span><span id="event-total">0</span></div>
+        <div class="summary" id="summary"></div>
+      </div>
+      <div class="filters" id="filters">
+        <button class="filter active" data-filter="all">Todo</button>
+        <button class="filter" data-filter="working">Trabajando</button>
+        <button class="filter" data-filter="needs_help">Ayuda</button>
+        <button class="filter" data-filter="done">Listo</button>
+      </div>
+      <div class="event-list" id="event-list"></div>
+      <footer><span class="connection"><i></i> Conectado localmente</span><button id="clear-events" class="text-button">Limpiar historial</button></footer>
+    </section>
+  </main>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  <div class="modal-backdrop" id="settings-backdrop" hidden>
+    <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <header><div><h1 id="settings-title">Personaliza tu hub</h1><p>Ajustes guardados en este equipo.</p></div><button class="icon-button" id="settings-close" aria-label="Cerrar">×</button></header>
+      <form id="settings-form">
+        <div class="setting-row"><div><b>Tema</b><small>Elige cómo se ve el panel</small></div><div class="segmented"><label><input type="radio" name="theme" value="dark"><span>Oscuro</span></label><label><input type="radio" name="theme" value="light"><span>Claro</span></label></div></div>
+        <div class="setting-row"><div><b>Posición</b><small>Lado de la pantalla</small></div><div class="segmented"><label><input type="radio" name="side" value="right"><span>Derecha</span></label><label><input type="radio" name="side" value="left"><span>Izquierda</span></label></div></div>
+        <div class="setting-row vertical"><div><b>Widgets visibles</b><small>Elige los estados que aparecen</small></div><div class="checks"><label><input type="checkbox" name="widget" value="working"> Trabajando</label><label><input type="checkbox" name="widget" value="done"> Terminado</label><label><input type="checkbox" name="widget" value="needs_help"> Necesita ayuda</label><label><input type="checkbox" name="widget" value="failed"> Con error</label></div></div>
+        <div class="setting-row"><div><b>Duración del aviso</b><small>0 segundos lo mantiene hasta descartarlo</small></div><label class="seconds"><input type="number" name="notificationSeconds" min="0" max="60" step="1"><span>seg</span></label></div>
+        <div class="divider"></div>
+        <div class="section-heading"><b>Conector Devin</b><small>Consulta sesiones cada 30 segundos</small></div>
+        <label class="field">ID de organización<input name="devinOrgId" placeholder="org_…" autocomplete="off"></label>
+        <label class="field">Clave API<input name="devinApiKey" type="password" placeholder="Dejar vacío para conservar la clave" autocomplete="new-password"></label>
+        <div class="form-note" id="key-note"></div>
+        <div class="modal-actions"><button type="button" class="secondary-button" id="settings-cancel">Cancelar</button><button type="submit" class="primary-button">Guardar cambios</button></div>
+      </form>
+    </section>
+  </div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "agente-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hub personal local para seguir agentes de IA.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "test": "node --test"
+  },
+  "devDependencies": { "@tauri-apps/cli": "^2.9.0" },
+  "engines": { "node": ">=20" }
+}
