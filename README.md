@@ -30,17 +30,27 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:43821/api/events -Headers $
 
 `POST /api/events` acepta `{agent, session, status, message?, project?, source?}`. La misma combinación de agente, sesión, estado y mensaje no se duplica si llega repetida en un minuto. `GET /api/state` devuelve el estado y `GET /api/stream` ofrece Server-Sent Events.
 
+### Codex
+
+Codex CLI puede avisar al hub al completar un turno usando su opción `notify`. Añade esta línea a `~/.codex/config.toml` y ajusta la ruta según dónde clones este repo:
+
+```toml
+notify = ["node", "C:/ruta/widget.bar/connectors/codex-notify.mjs"]
+```
+
+El aviso de finalización es el único evento de Codex que el CLI expone por este mecanismo. Para estados de trabajo o ayuda, usa el endpoint genérico desde una automatización.
+
 ### Cursor CLI
 
-El endpoint `POST /api/cursor/run` inicia una sesión `cursor-agent` en un directorio indicado y procesa el flujo NDJSON de `--output-format stream-json`. Requiere Cursor CLI instalado y autenticado. Enviar `{"prompt":"...","cwd":"C:\\ruta\\proyecto"}`; opcionalmente `agent` y `project`. La clave va en `Authorization`.
+El endpoint `POST /api/cursor/run` inicia una sesión `cursor-agent` en un directorio indicado y procesa el flujo NDJSON de `--output-format stream-json`. Requiere Cursor CLI instalado y autenticado. Enviar `{ "prompt": "...", "cwd": "C:\\ruta\\proyecto" }`; opcionalmente `agent` y `project`. La clave va en `Authorization`. El prompt se pasa por entrada estándar, no por una shell.
 
 ### Devin
 
 En Ajustes, introduce el ID de organización y una clave de servicio Devin. El hub consulta la API de sesiones cada 30 segundos. Las credenciales quedan solo en el archivo local. La solicitud de uso de la API y sus permisos pertenecen a tu cuenta de Devin.
 
-### Codex, Grok y otros
+### Grok Bot y otros
 
-Para cualquier agente que pueda ejecutar un script, usa el endpoint común anterior para informar `working`, `done`, `needs_help` o `failed`. El hub no observa aplicaciones externas por sí mismo. La detección automática de sesiones Codex mediante `app-server` y conectores adicionales pueden añadirse detrás del mismo formato común.
+Para cualquier agente que pueda ejecutar un script, usa el endpoint común anterior para informar `working`, `done`, `needs_help` o `failed`. El hub no observa aplicaciones externas por sí mismo; cada plataforma debe emitir eventos o iniciar una sesión mediante su conector.
 
 ## Seguridad y privacidad
 

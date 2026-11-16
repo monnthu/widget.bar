@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { makeEvent, upsertEvent } from '../server/hub.js';
+import { mapCodexNotification } from '../connectors/codex-notify.mjs';
 
 test('normalizes accepted event states and bounds user supplied text', () => {
   const event = makeEvent({ agent: ' Codex ', session: 't-1', status: 'needs_help', message: 'a'.repeat(600) });
@@ -29,6 +30,15 @@ test('deduplicates a repeated status and replaces the prior status for a session
   const finished = upsertEvent(inserted.events, makeEvent({ agent: 'Codex', session: 'abc', status: 'done' }));
   assert.equal(finished.events.length, 1);
   assert.equal(finished.events[0].status, 'done');
+});
+
+test('maps Codex turn-complete notifications into hub events', () => {
+  const event = mapCodexNotification({ type: 'agent-turn-complete', 'turn-id': 'turn-7', cwd: 'C:\\Projects\\demo', 'last-assistant-message': 'Listo' });
+  assert.equal(event.agent, 'Codex');
+  assert.equal(event.session, 'turn-7');
+  assert.equal(event.status, 'done');
+  assert.equal(event.project, 'demo');
+  assert.equal(mapCodexNotification({ type: 'other' }), null);
 });
 
 test('local API requires its token, stores events and dismisses one item', async t => {

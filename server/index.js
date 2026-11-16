@@ -110,18 +110,21 @@ function runCursor(input, res) {
   if (running.has(input.session || 'cursor-active')) return send(res, 409, { error: 'Esa sesión ya está activa.' });
   const session = String(input.session || `cursor-${Date.now()}`).slice(0, 160);
   addEvent({ agent: input.agent || 'Cursor', project: input.project || cwd.split(/[\\/]/).filter(Boolean).at(-1), session, status: 'working', source: 'cursor-cli', message: 'Iniciando agente' });
-  const proc = spawn('cursor-agent', ['-p', '--output-format', 'stream-json', prompt], { cwd, windowsHide: true, shell: process.platform === 'win32' });
+  const isWindows = process.platform === 'win32';
+  const executable = isWindows ? 'cmd.exe' : 'cursor-agent';
+  const args = isWindows
+    ? ['/d', '/s', '/c', 'cursor-agent -p --output-format stream-json']
+    : ['-p', '--output-format', 'stream-json'];
+  const proc = spawn(executable, args, { cwd, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
   running.set(session, proc);
   let stderr = '';
+  let stdoutBuffer = '';
   proc.stderr.on('data', data => { stderr = (stderr + data.toString()).slice(-1000); });
   proc.stdout.on('data', data => {
-    for (const line of data.toString().split(/\r?\n/)) {
-      if (!line) continue;
-      try {
-        const item = JSON.parse(line);
-        if (item.type === 'result') addEvent({ agent: input.agent || 'Cursor', project: input.project || '', session, status: item.subtype === 'success' ? 'done' : 'failed', source: 'cursor-cli', message: item.subtype === 'success' ? 'Trabajo terminado' : 'El agente terminó con error' });
-      } catch { /* Stream chunks may split a JSON line; terminal status is also inferred from exit. */ }
-    }
+    stdoutBuffer += data.toString();
+    const lines = stdoutBuffer.split(/\r?\n/);
+    stdoutBuffer = lines.pop() || '';
+    for (const line of lines) processCursorLine(line);
   });
   proc.on('error', error => {
     running.delete(session);
@@ -129,8 +132,19 @@ function runCursor(input, res) {
   });
   proc.on('close', code => {
     running.delete(session);
+    processCursorLine(stdoutBuffer);
     addEvent({ agent: input.agent || 'Cursor', project: input.project || '', session, status: code === 0 ? 'done' : 'failed', source: 'cursor-cli', message: code === 0 ? 'Trabajo terminado' : (stderr.trim() || `Cursor CLI terminó con código ${code}`).slice(0, 500) });
   });
+  function processCursorLine(line) {
+    if (!line) return;
+    try {
+      const item = JSON.parse(line);
+      if (item.type === 'result' && item.subtype !== 'success') {
+        addEvent({ agent: input.agent || 'Cursor', project: input.project || '', session, status: 'failed', source: 'cursor-cli', message: String(item.result || 'El agente terminó con error').slice(0, 500) });
+      }
+    } catch { /* Ignore partial or non-JSON output; process exit is authoritative. */ }
+  }
+  proc.stdin.end(prompt);
   return send(res, 202, { session, status: 'working' });
 }
 
