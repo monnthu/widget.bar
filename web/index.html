@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101114">
   <title>Agente Hub</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="dock" id="dock">
@@ -29,7 +29,7 @@
         <button class="filter" data-filter="done">Listo</button>
       </div>
       <div class="event-list" id="event-list"></div>
-      <footer><span class="connection"><i></i> Conectado localmente</span><button id="clear-events" class="text-button">Limpiar historial</button></footer>
+      <footer><span class="connection"><i></i><span id="connection-label">Conectado localmente</span></span><button id="clear-events" class="text-button">Limpiar historial</button></footer>
     </section>
   </main>
   <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
@@ -50,6 +50,6 @@
       </form>
     </section>
   </div>
-  <script src="/app.js" type="module"></script>
+  <script src="./app.js"></script>
 </body>
 </html>

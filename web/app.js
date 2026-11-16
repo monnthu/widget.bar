@@ -1,5 +1,6 @@
 const byId = id => document.getElementById(id);
 const labels = { working: 'Trabajando', done: 'Terminado', needs_help: 'Necesita ayuda', failed: 'Con error' };
+const demoMode = new URLSearchParams(location.search).get('demo') === '1';
 let state = { events: [], settings: {} };
 let token = '';
 let filter = 'all';
@@ -20,6 +21,12 @@ const ago = iso => {
 };
 
 async function api(path, body) {
+  if (demoMode) {
+    if (path === '/api/events/clear') state.events = [];
+    if (path === '/api/events/dismiss') state.events = state.events.filter(item => item.id !== body.id);
+    if (path === '/api/settings') state.settings = { ...state.settings, ...body };
+    return state;
+  }
   const response = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'content-type': 'application/json', authorization: `Bearer ${token}` } : {}, body: body ? JSON.stringify(body) : undefined });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || `Error ${response.status}`);
@@ -112,14 +119,29 @@ byId('settings-form').addEventListener('submit', async event => {
   try { accept(await api('/api/settings', body)); byId('settings-backdrop').hidden = true; } catch (error) { byId('key-note').textContent = error.message; }
 });
 
-try {
-  const info = await api('/api/info'); token = info.token;
-  accept(await api('/api/state'));
-  const stream = new EventSource('/api/stream');
-  stream.onmessage = event => { try { accept(JSON.parse(event.data)); } catch (error) { console.error(error); } };
-  stream.onerror = () => { byId('live-label').textContent = 'reconectando…'; };
-  stream.onopen = () => { byId('live-label').textContent = 'en tu equipo'; };
+if (demoMode) {
+  const agoIso = seconds => new Date(Date.now() - seconds * 1000).toISOString();
+  accept({
+    settings: { theme: 'dark', side: 'right', visibleWidgets: ['working', 'done', 'needs_help', 'failed'], notificationSeconds: 8 },
+    events: [
+      { id: 'demo-codex', agent: 'Codex', session: 'turn-demo-01', status: 'done', message: 'Preparé el resumen del proyecto y dejé los cambios listos para revisar.', project: 'widget.bar · DEMO', source: 'demo', updatedAt: agoIso(18) },
+      { id: 'demo-cursor', agent: 'Cursor', session: 'cursor-demo-02', status: 'working', message: 'Ajustando el panel y probando el diseño adaptable.', project: 'Agente Hub · DEMO', source: 'demo', updatedAt: agoIso(72) },
+      { id: 'demo-devin', agent: 'Devin', session: 'devin-demo-03', status: 'needs_help', message: 'Necesito que confirmes los permisos del repositorio para continuar.', project: 'widget.bar · DEMO', source: 'demo', updatedAt: agoIso(130) }
+    ]
+  });
+  byId('live-label').textContent = 'vista demo · no guarda eventos';
+  byId('connection-label').textContent = 'Demo local · cambios temporales';
   setInterval(render, 10_000);
-} catch (error) {
-  byId('event-list').innerHTML = `<div class="empty"><div><b>No se pudo conectar</b><span>${escapeHtml(error.message)}</span></div></div>`;
+} else {
+  try {
+    const info = await api('/api/info'); token = info.token;
+    accept(await api('/api/state'));
+    const stream = new EventSource('/api/stream');
+    stream.onmessage = event => { try { accept(JSON.parse(event.data)); } catch (error) { console.error(error); } };
+    stream.onerror = () => { byId('live-label').textContent = 'reconectando…'; };
+    stream.onopen = () => { byId('live-label').textContent = 'en tu equipo'; };
+    setInterval(render, 10_000);
+  } catch (error) {
+    byId('event-list').innerHTML = `<div class="empty"><div><b>No se pudo conectar</b><span>${escapeHtml(error.message)}</span></div></div>`;
+  }
 }
